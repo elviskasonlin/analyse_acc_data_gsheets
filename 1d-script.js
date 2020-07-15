@@ -17,7 +17,6 @@ function onOpen() {
   ui.createMenu('1D Menu')
     .addItem('Set Variables Acc', 'setVariablesAcc')
     .addItem('Process Acc Data', 'processAccData')
-    .addItem('Create Acc Chart', 'createAccChart')
     .addToUi();
 }
 
@@ -295,55 +294,99 @@ function calculateAccColumns(dstSheet, srcSheetRowCount, columnNumbers, columnLe
  * @param {type} variable
  */
 
-function createChart(type, srcSheet, dataTable, title, options) {
-  let sheet = srcSheet;
-  let range = rangeList;
-  let optionPos = options.position;
-  let optionTitle = title;
-  let optionHAxis = options.hAxis;
+function createChart(options, dstSheet) {
+  let chart = dstSheet.newChart()
+    .setChartType(Charts.ChartType.LINE)
+    .addRange(dstSheet.getRange(options.rangeX))
+    .addRange(dstSheet.getRange(options.rangeY))
+    .setPosition(options.position.anchorRowPos, options.position.anchorColPos, options.position.offsetX, options.position.offsetY)
+    .setOption('title', options.title)
+    .setOption('legend', {position: 'bottom', textStyle: {color: 'black', fontSize: 12}})
+    .setOption('useFirstColumnAsDomain', true)
+    .setNumHeaders(1)
+    .build();
   
-  if (type === "line") {
-    let builder = activeSpreadsheet.newChart().asLineChart();
-    let chart = builder
-      .setDataTable(dataTable)
-      .setPosition(optionPos.anchorRowPos, optionPos.anchorColPos, optionPos.offsetX, optionPos.offsetY)
-      .setTitle(optionTitle)
-      .setNumHeaders(1)
-      .setLegendPosition(Charts.Position.BOTTOM)
-      .setOption('hAxis', optionHAxis)
-      .build();
-    
-    activeSpreadsheet.insertChart(chart);
-  }
+  dstSheet.insertChart(chart);
 }
 
-function createAccInsightGraphs(dstSheet, srcSheetRowCount, columnNumbers, columnLetters, graphOptions) {
-  
-}
 
 /* 
- * Function: calculateAccInsights 
- * Calculates insights such as max velocity attained, the displacement etc.
- * 
+ * Function: createAccInsightGraphs 
+ * Creates A/t, V/t, and S/t graphs as part of processAccData
+ *
  * @param {Object} dstSheet
  * @param {Int} srcSheetRowCount
  * @param {Object} columnNumbers
  * @param {Object} columnLetters
  */
 
-function calculateAccInsights(dstSheet, srcSheetRowCount, columnNumbers, columnLetters) {
-/*
-Distance =MAX(O3:O3081)
-Max Velocity =MAX(M2:M3081)
-Max Acceleration =MAX(I2:I3081)
-Mean Velocity =AVERAGE(M2:M982)
-Mean Acceleration =AVERAGE(I2:I982)
-*/
+function createAccInsightGraphs(dstSheet, srcSheetRowCount, columnNumbers, columnLetters) {
   
-  //let colNumInsightAnchor = columnNumbers.colNumInsightAnchor;
+  // Chart Options
+  let options = {
+    title: "",
+    position: {
+      anchorRowPos: 4,
+      anchorColPos: 20,
+      offsetX: 0,
+      offsetY: 0,
+    },
+    rangeX: "",
+    rangeY: "",
+  }
   
+  // Create d/t graph
+  options.rangeX = columnLetters.colLetterElapsedTime + 1 + ":" + columnLetters.colLetterElapsedTime + srcSheetRowCount;
+  options.rangeY = columnLetters.colLetterDisplacementAtTime + 1 + ":" + columnLetters.colLetterDisplacementAtTime + srcSheetRowCount;
+  options.title = "d/t";
+  createChart(options, dstSheet);
   
+  // Create v/t graph
+  options.rangeX = columnLetters.colLetterElapsedTime + 1 + ":" + columnLetters.colLetterElapsedTime + srcSheetRowCount;
+  options.rangeY = columnLetters.colLetterVelocityAtTime + 1 + ":" + columnLetters.colLetterVelocityAtTime + srcSheetRowCount;
+  options.title = "v/t";
+  options.position.anchorRowPos += 20;
+  createChart(options, dstSheet);
   
+  // Create a/t graph
+  options.rangeX = columnLetters.colLetterElapsedTime + 1 + ":" + columnLetters.colLetterElapsedTime + srcSheetRowCount;
+  options.rangeY = columnLetters.colLetterShift + 1 + ":" + columnLetters.colLetterShift + srcSheetRowCount;
+  options.title = "a/t";
+  options.position.anchorRowPos += 20;
+  createChart(options, dstSheet);
+}
+
+/* 
+ * Function: calculateAccInsights 
+ * Calculates insights such as max velocity attained, the displacement etc.
+ *
+ * @param {Object} dstSheet
+ * @param {Int} srcSheetRowCount
+ * @param {Object} columnNumbers
+ * @param {Object} columnLetters
+ */
+
+function calculateAccInsights(srcSheet, srcSheetRowCount, columnNumbers, columnLetters) {
+
+  let colLDT = columnLetters.colLetterDisplacementAtTime;
+  let colLVT = columnLetters.colLetterVelocityAtTime;
+  let colLShift = columnLetters.colLetterShift;
+  
+  // Total Distance Travelled
+  srcSheet.getRange(2, columnNumbers.colNumInsightAnchor).setValue("Total Distance Travelled");
+  srcSheet.getRange(2, columnNumbers.colNumInsightAnchor+1).setFormula("MAX(" + colLDT + 2 + ":" + colLDT + srcSheetRowCount + ")");
+  // Max Velocity Attained
+  srcSheet.getRange(3, columnNumbers.colNumInsightAnchor).setValue("Max Velocity Attained");
+  srcSheet.getRange(3, columnNumbers.colNumInsightAnchor+1).setFormula("MAX(" + colLVT + 2 + ":" + colLVT + srcSheetRowCount + ")");
+  // Max Acceleration Attained
+  srcSheet.getRange(4, columnNumbers.colNumInsightAnchor).setValue("Max Acceleration Attained");
+  srcSheet.getRange(4, columnNumbers.colNumInsightAnchor+1).setFormula("MAX(" + colLShift + 2 + ":" + colLShift + srcSheetRowCount + ")");
+  // Mean Velocity
+  srcSheet.getRange(5, columnNumbers.colNumInsightAnchor).setValue("Mean Velocity");
+  srcSheet.getRange(5, columnNumbers.colNumInsightAnchor+1).setFormula("AVERAGE(" + colLVT + 2 + ":" + colLVT + srcSheetRowCount + ")");
+  // Mean Acceleration
+  srcSheet.getRange(6, columnNumbers.colNumInsightAnchor).setValue("Mean Acceleration");
+  srcSheet.getRange(6, columnNumbers.colNumInsightAnchor+1).setFormula("AVERAGE(" + colLShift + 2 + ":" + colLShift + srcSheetRowCount + ")");
 }
 
 
@@ -423,7 +466,7 @@ function processAccData() {
   }
 
   // STEPS
-
+  
   // Copy required data in columns to new sheet
   copyColumn(srcSheet, dstSheet, cellA1ToIndex(PropertiesService.getDocumentProperties().getProperty("unixTime") + "1").col, 1);
   copyColumn(srcSheet, dstSheet, cellA1ToIndex(PropertiesService.getDocumentProperties().getProperty("logSample") + "1").col, 2);
@@ -437,31 +480,7 @@ function processAccData() {
   // Calculate insights such as max velocity achieved from the previous
   calculateAccInsights(dstSheet, srcSheetRowCount, columnNumbers, columnLetters);
   
-  // Create graphs
-  let graphOptions = {
-    
-  }
-  createAccInsightGraphs(dstSheet, srcSheetRowCount, columnNumbers, columnLetters, graphOptions);
-  
-  /*
-  // CHART Create a/t graph
-  
-  // Global Chart Options
-  let options = {
-    position: {
-      anchorRowPos: 4,
-      anchorColPos: 14,
-      offsetX: 0,
-      offsetY: 0,
-    },
-    hAxis: {
-      gridlines: {
-        count: 12
-      }
-    }
-  }
-  
-  let dataTable = ;
-  createChart("line", dstSheet, dataTable, "a/t", options);
-  */
+  // Create Graphs
+  createAccInsightGraphs(dstSheet, srcSheetRowCount, columnNumbers, columnLetters)
+
 }
