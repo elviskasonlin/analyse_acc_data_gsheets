@@ -1,6 +1,9 @@
-// ABOUT
 // Script for processing acceleration data for 1D project
+// Google Sheets Add-on
 // Created by Elvis on 20/06/20
+//
+// Licensed under GNU General Public License v3.0
+// See the LICENSE file in the root folder
 
 let activeSpreadsheet = SpreadsheetApp.getActiveSpreadsheet();
 let ui = SpreadsheetApp.getUi();
@@ -163,14 +166,14 @@ function copyColumn(srcSheet, dstSheet, srcColumnIndex, dstColumnIndex) {
  * Sets acceleration variables by storing them in document properties
  */
 function setVariablesAcc() {
-  PropertiesService.getDocumentProperties().setProperty("dataSheet", getVarByPrompt("Enter name of sheet with logged data", " ").toString());
-  PropertiesService.getDocumentProperties().setProperty("unixTime", getVarByPrompt("Enter column id to extract", "Log timestamp in UNIX time").toString());
-  PropertiesService.getDocumentProperties().setProperty("logSample", getVarByPrompt("Enter column id to extract", "Log sample count").toString());
-  PropertiesService.getDocumentProperties().setProperty("accX", getVarByPrompt("Enter column id to extract", "X-axis acceleration").toString());
-  PropertiesService.getDocumentProperties().setProperty("accY", getVarByPrompt("Enter column id to extract", "Y-axis acceleration").toString());
-  PropertiesService.getDocumentProperties().setProperty("accZ", getVarByPrompt("Enter column id to extract", "Z-axis acceleration").toString());
-  PropertiesService.getDocumentProperties().setProperty("shiftSampleFrom", getVarByPrompt("Enter row number", "For the start cell in order to sample for the baseline shift").toString());
-  PropertiesService.getDocumentProperties().setProperty("shiftSampleTo", getVarByPrompt("Enter row number", "For the end cell in order to sample for the baseline shift").toString());
+  PropertiesService.getDocumentProperties().setProperty("dataSheet", getVarByPrompt("Enter name of sheet with the logged data", " ").toString());
+  PropertiesService.getDocumentProperties().setProperty("unixTime", getVarByPrompt("Enter the letter of column to extract", "Log timestamp in UNIX time").toString());
+  PropertiesService.getDocumentProperties().setProperty("logSample", getVarByPrompt("Enter the letter of column to extract", "Log sample count").toString());
+  PropertiesService.getDocumentProperties().setProperty("accX", getVarByPrompt("Enter the letter of column to extract", "X-axis acceleration").toString());
+  PropertiesService.getDocumentProperties().setProperty("accY", getVarByPrompt("Enter the letter of column to extract", "Y-axis acceleration").toString());
+  PropertiesService.getDocumentProperties().setProperty("accZ", getVarByPrompt("Enter the letter of column to extract", "Z-axis acceleration").toString());
+  PropertiesService.getDocumentProperties().setProperty("shiftSampleFrom", getVarByPrompt("Enter the row number of start cell", "Start point for use in compensating for the baseline shift").toString());
+  PropertiesService.getDocumentProperties().setProperty("shiftSampleTo", getVarByPrompt("Enter the row number of end cell", "End point for use in compensating for the baseline shift").toString());
   
   ui.alert("Variables set");
 }
@@ -289,9 +292,10 @@ function calculateAccColumns(dstSheet, srcSheetRowCount, columnNumbers, columnLe
 
 /*
  * Function: createChart
- * Creates a chart
+ * Creates a chart with given options at the destination sheet
  * 
- * @param {type} variable
+ * @param {Object} options
+ * @param {Object} dstSheet
  */
 
 function createChart(options, dstSheet) {
